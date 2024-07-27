@@ -1,0 +1,85 @@
+{
+	"legendaryGroup": [
+		{
+			"name": "Aboleth",
+			"source": "MM",
+			"page": 13,
+			"lairActions": [
+				"When fighting inside its lair, an aboleth can invoke the ambient magic to take lair actions. On initiative count 20 (losing initiative ties), the aboleth takes a lair action to cause one of the following effects:",
+				{
+					"type": "list",
+					"items": [
+						"The aboleth casts {@spell phantasmal force} (no components required) on any number of creatures it can see within 60 feet of it. While maintaining {@status concentration} on this effect, the aboleth can't take other lair actions. If a target succeeds on the saving throw or if the effect ends for it, the target is immune to the aboleth's phantasmal force lair action for the next 24 hours, although such a creature can choose to be affected.",
+						"Pools of water within 90 feet of the aboleth surge outward in a grasping tide. Any creature on the ground within 20 feet of such a pool must succeed on a {@dc 14} Strength saving throw or be pulled up to 20 feet into the water and knocked {@condition prone}. The aboleth can't use this lair action again until it has used a different one.",
+						"Water in the aboleth's lair magically becomes a conduit for the creature's rage. The aboleth can target any number of creatures it can see in such water within 90 feet of it. A target must succeed on a {@dc 14} Wisdom saving throw or take 7 ({@damage 2d6}) psychic damage. The aboleth can't use this lair action again until it has used a different one."
+					]
+				}
+			],
+			"regionalEffects": [
+				"The region containing an aboleth's lair is warped by the creature's presence, which creates one or more of the following effects:",
+				{
+					"type": "list",
+					"items": [
+						"Underground surfaces within 1 mile of the aboleth's lair are slimy and wet and are {@quickref difficult terrain||3}.",
+						"Water sources within 1 mile of the lair are supernaturally fouled. Enemies of the aboleth that drink such water vomit it within minutes.",
+						"As an action, the aboleth can create an illusory image of itself within 1 mile of the lair. The copy can appear at any location the aboleth has seen before or in any location a creature {@condition charmed} by the aboleth can currently see. Once created, the image lasts for as long as the aboleth maintains {@status concentration}, as if {@status concentration||concentrating} on a spell. Although the image is intangible, it looks, sounds, and can move like the aboleth. The aboleth can sense, speak, and use telepathy from the image's position as if present at that position. If the image takes any damage, it disappears."
+					]
+				},
+				"If the aboleth dies, the first two effects fade over the course of {@dice 3d10} days."
+			]
+		},
+		{
+			"name": "Aerisi Kalinoth",
+			"source": "PotA",
+			"page": 192,
+			"lairActions": [
+				"If Aerisi is in the air node while {@creature Yan-C-Bin|PotA} isn't, Aerisi can take lair actions. On initiative count 20 (losing initiative ties), Aerisi uses a lair action to cast one of her spells, up to 3rd level, without using components or a spell slot. She can't cast the same spell two rounds in a row, although she can continue to concentrate on a spell she previously cast using a lair action. Aerisi can take no other lair actions while {@status concentration||concentrating} on a spell cast as a lair action.",
+				"If Aerisi casts {@spell invisibility} using this lair action, she also draws the power of the air node into herself. By doing so, she regains 15 ({@dice 3d8 + 2}) hit points."
+			]
+		},
+		{
+			"name": "Alyxian the Absolved",
+			"source": "CRCotN",
+			"lairActions": [
+				"On initiative count 20 (losing initiative ties), Alyxian can take one of the following lair actions; he can't take the same lair action two rounds in a row:",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Avandra's Grasp",
+							"entries": [
+								"Alyxian uses the power of Avandra's ruined temple (area H2) to create a watery tendril that rises out of the lake. One creature Alyxian can see that's not submerged in the lake must succeed on a {@dc 15} Dexterity saving throw or be {@condition restrained} by the tendril. The tendril is a Large object that has AC 10, 15 hit points, and immunity to poison and psychic damage. The tendril disappears when it is reduced to 0 hit points or the next time Alyxian takes a lair action."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Corellon's Charm",
+							"entries": [
+								"Alyxian causes a magical wisp of light to emerge from Corellon's ruined temple (area H3). The wisp enters the body of one creature Alyxian can see that isn't inside Corellon's ruined temple or atop the rocky island that supports it. The creature must succeed on a {@dc 15} Wisdom saving throw or be {@condition charmed} by Alyxian until initiative count 20 of the next round."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Sehanine's Torment",
+							"entries": [
+								"Alyxian uses the power of Sehanine's ruined temple (area H4) to create a watery form in the space of one creature that is either standing on the lake or submerged in it. The watery form assumes the vague likeness of the creature whose space it occupies and makes one melee weapon attack (+7 to hit) against it. On a hit, the attack deals 8 ({@damage 10d8 + 4}) bludgeoning damage. Whether it hits or misses, the watery form disappears after making its attack."
+							]
+						}
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Prayers to the Gods",
+					"entries": [
+						"A character can use an action to pray to Avandra, Corellon, or Sehanine in the deity's prayer site. The character must succeed on a {@dc 15} Wisdom ({@skill Religion}) check, and the check has advantage if the character is a worshiper of that god. On a successful check, the profane ruins atop the island melt away, and Alyxian can no longer use the lair action associated with that prayer site. In addition, Alyxian takes 14 ({@damage 4d6}) psychic damage, regardless of his current form."
+					]
+				}
+			]
+		},
+		{
+
+		}
+	]
+}
