@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 import json
 from utils import convert_to_float
-from pprint import pprint
 
 from models import Monster, StatBlock, ActionsBlock, VariantBlock, LairActionsBlock, RegionalEffectsBlock, Item
 
@@ -38,11 +37,12 @@ def get_cr(maybe_dict) -> dict[str, float]:
 
 def get_action_block(actions) -> ActionsBlock:
     items: list[Item] = []
+    logger.info(actions)
     for action in actions:
         name = action['name']
-        description = action['entries'][0]
+        description = ''.join(s for s in action['entries'] if isinstance(s, str))
         sub_items: list[Item] = []
-        for entry in (action['entries'][1:] if len(action['entries']) > 1 else []):
+        for entry in (entry for entry in action['entries'] if not isinstance(entry, str)):
             for item in entry.get('items'):
                 entry = item.get('entry')
                 if entry is None:
@@ -52,7 +52,7 @@ def get_action_block(actions) -> ActionsBlock:
         items.append(Item(name, description, sub_items))
     return ActionsBlock(items)
 
-def handle_item_as_dict(sub_obj) -> list[str] | list[Item]:
+def handle_action_item_as_dict(sub_obj) -> list[str] | list[Item]:
     if sub_obj['type'] == 'list':
         if all(isinstance(s, str) for s in sub_obj['items']):
             return sub_obj['items']
@@ -85,6 +85,8 @@ def handle_item_as_dict(sub_obj) -> list[str] | list[Item]:
                     else:
                         logger.error('No `items` key under sub_obj[top_idx][`entries`][sub_idx]')
             return [Item(name, description, sub_items)]
+    else:
+        logger.error('sub_obj["type"] neq entries or list')
 
 def create_lair_actions(source: str, actions_list) -> LairActionsBlock:
     desc = ''
@@ -94,102 +96,115 @@ def create_lair_actions(source: str, actions_list) -> LairActionsBlock:
         actions_list = actions_list['items']
 
     for i in actions_list:
-        # json could be a obj
+        # actions_list could be a obj and not a list!!
         if isinstance(i, str):
             desc = desc + ' ' + i
         elif isinstance(i, dict):
-            agg.extend(handle_item_as_dict(i))
+            agg.extend(handle_action_item_as_dict(i))
         else:
             logger.warn(f'i is typeof({typeof(i)}) which is not supported!!')
 
     return LairActionsBlock(source, desc, agg)
 
-def handle_node(field) -> list[str] | list[Item]:
-    if isinstance(field, str):
-        return field
-    if field.get('type') == 'table':
-        item = Item(field['caption'], field['colLabels'][1] +' (' + field['colLabels'][0] + ')', [])
-        for row in field['rows']:
+def handle_non_string_node(node) -> list[Item]:
+    if node.get('type') == 'item':
+        name = node.get('name')
+        desc = ''
+        if node.get('entries'):
+            desc = ' '.join(node['entries'])
+        else:
+            desc = node['entry']
+        return [Item(name, desc, [])]
+    if node.get('type') == 'list' and all(isinstance(i, str) for i in node.get('items')):
+        return [Item(node.get('name'), ' '.join(node['items']), [])]
+    if node.get('type') == 'list': 
+        if node.get('entries'):
+            return [handle_non_string_node(i) for i in node['entries'] if not isinstance(i, str)]
+        else:
+            return [handle_non_string_node(i) for i in node['items'] if not isinstance(i, str)]
+    if node.get('type') == 'entries':
+        name = node['name']
+        desc = ' '.join(s for s in node['entries'] if isinstance(s, str))
+        sub_items = [handle_non_string_node(i) for i in node['entries'] if not isinstance(i, str)]
+        return [Item(name, desc, sub_items)]
+    if node.get('type') == 'table':
+        item = Item(node['caption'], node['colLabels'][1] +' (' + node['colLabels'][0] + ')', [])
+        for row in node['rows']:
             roll = row[0].replace('\\u2013', '-')
             desc = row[1].replace('"','')
             item.sub_items.append(Item(roll, desc, []))
-        return item
-    if field.get('name') and field.get('entry'):
-        return Item(field['name'], field['entry'], [])
-    if field.get('entries'):
-        if field.get('name'):
-            if all(isinstance(i, str) for i in field['entries']):
-                return Item(field['name'], ' '.join(field['entries']), [])
-            else:
-                desc = ' '.join(s for s in field['entries'] if isinstance(s, str))
-                sub = [handle_node(it) for it in field['entries'] if not isinstance(it, str)]
-                return Item(field['name'], desc, sub)
-        else:
-            return ' '.join(field['entries'])
-
-#def handle_complex_node(complex_node) -> list[Item]:
-#    if complex_node.get('items'):
-#        if all(i.get('entry') for i in complex_node['items']):
-#            return [Item(item['name'], item['entry'], []) for item in complex_node['items']]
-#    elif complex_node.get('type') == 'table':
-#        item = Item(complex_node['caption'], complex_node['colLabels'][1] +' (' + complex_node['colLabels'][0] + ')', [])
-#            roll = row[0].replace('\\u2013', '-')
-#            desc = row[1].replace('"','')
-#            item.sub_items.append(Item(roll, desc, []))
-#            return [item]
+        return [item]
+    else:
+        logger.error('node had no type key. im guessing its a nested string?')
     
 
-#def handle_non_string_node(node) -> Item
-#    if node.get('type') == 'list' and all(isinstance(i, str) for i in node.get('items')):
-#        return Item(node.get('name'), None, node['items'])
-#    if node.get('type') == 'list':
-#    if node.get('type') == 'entries':
-#        name = node['name']
-#        desc = ' '.join(s for s in node['entries'] if isinstance(s, str))
+def create_regional_effects(source: str, regional_effects_list) -> RegionalEffectsBlock:
+    desc = ''
+    agg = []
 
-#def create_regional_effects(source: str, effects_list) -> RegionalEffectsBlock:
-#    desc = ''
-#    agg = []
-#
-#    for i in effects_list:
-#        # json could be a obj
-#        if isinstance(i, str):
-#            desc = desc + ' ' + i
-#        elif isinstance(i, dict):
-#            agg.append(handle_node(i))
-#        else:
-#            logger.warn(f'i is typeof({typeof(i)}) which is not supported!!')
-#
-#    return RegionalEffectsBlock(source, desc, agg)
+    if isinstance(regional_effects_list, dict):
+        regional_effects_list = regional_effects_list['items']
+
+    for i in regional_effects_list:
+        # TODO regional_effects_list could be a obj and not a list!!
+        if isinstance(i, str):
+            desc = desc + ' ' + i
+        elif isinstance(i, dict):
+            agg.extend(handle_non_string_node(i))
+        else:
+            logger.error(f'i is typeof({typeof(i)}) which is not supported!!')
+
+    return RegionalEffectsBlock(source, desc, agg)
+
+def create_traits(items) -> list[Item]:
+    l = []
+    for t in items:
+        name = t['name']
+        desc = ' '.join([s for s in t['entries'] if isinstance(s, str)])
+        sub_items = [Item(si['name'], ' '.join(si['entries']), []) for si in t['entries'] if not isinstance(si, str)]
+        l.append(Item(name, desc, sub_items))
+    return l
+
+def create_ac(ac) -> list[(int, str)]:
+    l = []
+    for i in ac:
+        if isinstance(i, int):
+            l.append((i, 'base'))
+        elif isinstance(i, dict):
+            ac = i['ac']
+            if i.get('from'):
+                source = ', '.join(i['from'])
+            else:
+                source = i['condition']
+            l.append((ac, source))
+    return l
 
 
 def setup_bestiary(path: Path) -> None:
-    #target: Path = path / 'data' / 'bestiary'
-    target = Path.home() / 'repositories' / 'dnd5e-tools' / 'test'
+    target: Path = Path(path) / 'data' / 'bestiary'
+    logger.info(target)
+    #target = Path.home() / 'repositories' / 'dnd5e-tools' / 'test'
 
     monsters: list[Monster] = []
-    for file in (f for f in target.rglob('*.json') if f.name.startswith('monster')):
+    for file in (f for f in target.rglob('*.json') if f.name.startswith('bestiary')):
+        logger.info(file)
         data = json.loads(file.read_text(encoding="UTF-8"))
         for entry in data['monster']:
+            logger.info(f'creating monster {entry["name"]}')
             if entry.get('cr') is None:
                 continue
 
-            alignment = ''.join(entry['alignment'])
+            alignment = ''.join(entry['alignment']) if entry.get('alignment') else None
             # TODO skip if cr == 'Unknown'
             cr = get_cr(entry['cr'])
             stat_block: StatBlock = StatBlock(entry['str'], entry['dex'], entry['con'], entry['int'], entry['wis'], entry['cha'], )
             
-            ac = entry['ac'][0]
-            natural_armor = False
-            if isinstance(entry['ac'][0], dict):
-                ac = entry['ac'][0]['ac']
-                natural_armor = (entry['ac'][0]['from'][0] == "natural armor")
+            ac = create_ac(entry['ac'])
+            logger.info(ac)
+
+            traits = create_traits(entry['trait']) if entry.get('trait') else None
             
-            traits = {}
-            for trait in entry.get('trait'):
-                traits[trait['name']] = ' '.join(trait['entries'])
-            
-            actions = get_action_block(entry.get('action'))
+            actions = get_action_block(entry['action']) if entry.get('action') else None
             legendary_actions = get_action_block(entry.get('legendary')) if entry.get('legendary') else None
             variant = entry.get('variant')
             legendary_group_name = None
@@ -202,7 +217,6 @@ def setup_bestiary(path: Path) -> None:
                               entry['speed'],
                               alignment,
                               ac,
-                              natural_armor,
                               entry['size'],
                               entry.get('languages', []),
                               entry['passive'],
@@ -211,7 +225,7 @@ def setup_bestiary(path: Path) -> None:
                               entry.get('vulnerable', []),
                               entry.get('conditionImmune', []),
                               entry['source'],
-                              entry['page'],
+                              entry.get('page'),
                               entry['type'],
                               entry['hp']['formula'],
                               entry.get('environment', []),
@@ -242,25 +256,23 @@ def setup_bestiary(path: Path) -> None:
                 regional_effects_by_name[name] = []
 
             source = i['source']
-            logger.info(f'top level obj name = {name}')
             for k, v in i.items():
                 if k == '_copy':
                     if v['_mod'].get('lairActions'):
                         lair_actions_by_name[name].append(create_lair_actions(source, v['_mod']['lairActions']))
-                    #if v['_mod'].get('regionalEffects'):
-                        #regional_effects_by_name[name].append(create_regional_effects(source, v['_mod']['regionalEffects']))
+                    if v['_mod'].get('regionalEffects'):
+                        regional_effects_by_name[name].append(create_regional_effects(source, v['_mod']['regionalEffects']))
                 if k == 'lairActions':
                     lair_actions_by_name[name].append(create_lair_actions(source, v))
-                #if k == 'regionalEffects':
-                #    regional_effects_by_name[name].append(create_regional_effects(source, v))
+                if k == 'regionalEffects':
+                    regional_effects_by_name[name].append(create_regional_effects(source, v))
+        
+        for m in monsters:
+            if m.legendary_group_name in lair_actions_by_name:
+                logger.info(f'adding lair actions to {m.name} because {m.legendary_group_name} is in lair actions keys')
+                m.lair_actions = lair_actions_by_name[m.legendary_group_name]
 
-        for key, value in lair_actions_by_name.items():
-            logger.info(f'{key}:')
-            for lair_action in value:
-                logger.info(f'{lair_action}')
-                #logger.info(f'{lair_action}')
-                #logger.info(f'{lair_action}')
-                #logger.info(f'{lair_action}')
-                #logger.info(f'{lair_action}')
-
+            if m.legendary_group_name in regional_effects_by_name:
+                logger.info(f'adding lair actions to {m.name} because {m.legendary_group_name} is in regional effects keys')
+                m.regional_effects = regional_effects_by_name[m.legendary_group_name]
 

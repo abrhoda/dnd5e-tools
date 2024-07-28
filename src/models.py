@@ -34,9 +34,8 @@ class BaseEntity:
     hit_points: int
     stat_block: StatBlock
     speeds: dict[str, int]
-    alignment: str
-    ac: int
-    natural_armor: bool
+    alignment: str | None
+    ac: list[(int, str)]
     size: str
     languages: list[str]
     passive_perception: int # called passive in json
@@ -91,7 +90,7 @@ class SpellcastingBlock:
 @dataclass
 class Monster(BaseEntity):
     primary_source: str
-    page: int
+    page: int | None
     _type: str
     hp_formula: str
     environments: list[str]
@@ -100,13 +99,13 @@ class Monster(BaseEntity):
     senses: list[str]
     challenge_rating: float
     lair_challenge_rating: float | None
-    traits: dict[str, str]
+    traits: list[Item] | None
     #spellcasting: SpellcastingBlock
     actions: ActionsBlock | None
     legendary_actions: ActionsBlock | None
     legendary_group_name: str | None
     lair_actions: list[LairActionsBlock] | None
-    regional_effects: RegionalEffectsBlock | dict | None
+    regional_effects: list[RegionalEffectsBlock] | None
     variant: VariantBlock | dict | None
 
     #def __post_init__(self):
