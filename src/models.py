@@ -73,6 +73,12 @@ class LairActionsBlock:
     actions: list[Item] | list[str]
 
 @dataclass
+class LairActions:
+    source: str
+    description: str
+    actions: dict
+
+@dataclass
 class RegionalEffectsBlock:
     source: str
     description: str

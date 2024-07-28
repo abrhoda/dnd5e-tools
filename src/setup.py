@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 import json
 from utils import convert_to_float
+from pprint import pprint
 
 from models import Monster, StatBlock, ActionsBlock, VariantBlock, LairActionsBlock, RegionalEffectsBlock, Item
 
@@ -97,7 +98,7 @@ def create_lair_actions(source: str, actions_list) -> LairActionsBlock:
         if isinstance(i, str):
             desc = desc + ' ' + i
         elif isinstance(i, dict):
-            agg.append(handle_item_as_dict(i))
+            agg.extend(handle_item_as_dict(i))
         else:
             logger.warn(f'i is typeof({typeof(i)}) which is not supported!!')
 
@@ -126,49 +127,45 @@ def handle_node(field) -> list[str] | list[Item]:
         else:
             return ' '.join(field['entries'])
 
-def handle_complex_node(complex_node) -> list[Item]
-    if complex_node.get('items'):
-        if all(i.get('entry') for i in complex_node['items']):
-            return [Item(item['name'], item['entry'], []) for item in complex_node['items']]
-    elif complex_node.get('type') == 'table':
-        item = Item(complex_node['caption'], complex_node['colLabels'][1] +' (' + complex_node['colLabels'][0] + ')', [])
-            roll = row[0].replace('\\u2013', '-')
-            desc = row[1].replace('"','')
-            item.sub_items.append(Item(roll, desc, []))
-            return [item]
+#def handle_complex_node(complex_node) -> list[Item]:
+#    if complex_node.get('items'):
+#        if all(i.get('entry') for i in complex_node['items']):
+#            return [Item(item['name'], item['entry'], []) for item in complex_node['items']]
+#    elif complex_node.get('type') == 'table':
+#        item = Item(complex_node['caption'], complex_node['colLabels'][1] +' (' + complex_node['colLabels'][0] + ')', [])
+#            roll = row[0].replace('\\u2013', '-')
+#            desc = row[1].replace('"','')
+#            item.sub_items.append(Item(roll, desc, []))
+#            return [item]
     
 
-def handle_non_string_node(node) -> Item
-    if node.get('type') == 'list' and all(isinstance(i, str) for i in node.get('items')):
-        return Item(node.get('name'), None, node['items'])
-    if node.get('type') == 'list':
-    if node.get('type') == 'entries':
-        name = node['name']
-        desc = ' '.join(s for s in node['entries'] if isinstance(s, str))
-    
+#def handle_non_string_node(node) -> Item
+#    if node.get('type') == 'list' and all(isinstance(i, str) for i in node.get('items')):
+#        return Item(node.get('name'), None, node['items'])
+#    if node.get('type') == 'list':
+#    if node.get('type') == 'entries':
+#        name = node['name']
+#        desc = ' '.join(s for s in node['entries'] if isinstance(s, str))
 
-def create_regional_effects(source: str, effects_list) -> RegionalEffectsBlock:
-    desc = ''
-    agg = []
-
-    #if isinstance(effects_list, dict):
-    #    effects_list = effects_list['items']
-
-    for i in effects_list:
-        # json could be a obj
-        if isinstance(i, str):
-            desc = desc + ' ' + i
-        elif isinstance(i, dict):
-            agg.append(handle_node(i))
-        else:
-            logger.warn(f'i is typeof({typeof(i)}) which is not supported!!')
-
-    return RegionalEffectsBlock(source, desc, agg)
+#def create_regional_effects(source: str, effects_list) -> RegionalEffectsBlock:
+#    desc = ''
+#    agg = []
+#
+#    for i in effects_list:
+#        # json could be a obj
+#        if isinstance(i, str):
+#            desc = desc + ' ' + i
+#        elif isinstance(i, dict):
+#            agg.append(handle_node(i))
+#        else:
+#            logger.warn(f'i is typeof({typeof(i)}) which is not supported!!')
+#
+#    return RegionalEffectsBlock(source, desc, agg)
 
 
 def setup_bestiary(path: Path) -> None:
     #target: Path = path / 'data' / 'bestiary'
-    target = Path.home() / 'repositories' / 'play-together' / 'test'
+    target = Path.home() / 'repositories' / 'dnd5e-tools' / 'test'
 
     monsters: list[Monster] = []
     for file in (f for f in target.rglob('*.json') if f.name.startswith('monster')):
@@ -248,15 +245,22 @@ def setup_bestiary(path: Path) -> None:
             logger.info(f'top level obj name = {name}')
             for k, v in i.items():
                 if k == '_copy':
-                    #if v['_mod'].get('lairActions'):
-                    #    lair_actions_by_name[name].append(create_lair_actions(source, v['_mod']['lairActions']))
-                    if v['_mod'].get('regionalEffects'):
-                        logger.info('first')
-                        regional_effects_by_name[name].append(create_regional_effects(source, v['_mod']['regionalEffects']))
-                #if k == 'lairActions':
-                #    lair_actions_by_name[name].append(create_lair_actions(source, v))
-                if k == 'regionalEffects':
-                    regional_effects_by_name[name].append(create_regional_effects(source, v))
+                    if v['_mod'].get('lairActions'):
+                        lair_actions_by_name[name].append(create_lair_actions(source, v['_mod']['lairActions']))
+                    #if v['_mod'].get('regionalEffects'):
+                        #regional_effects_by_name[name].append(create_regional_effects(source, v['_mod']['regionalEffects']))
+                if k == 'lairActions':
+                    lair_actions_by_name[name].append(create_lair_actions(source, v))
+                #if k == 'regionalEffects':
+                #    regional_effects_by_name[name].append(create_regional_effects(source, v))
 
-        for key, value in regional_effects_by_name.items():
-            logger.info(f'{key}: - {value}')
+        for key, value in lair_actions_by_name.items():
+            logger.info(f'{key}:')
+            for lair_action in value:
+                logger.info(f'{lair_action}')
+                #logger.info(f'{lair_action}')
+                #logger.info(f'{lair_action}')
+                #logger.info(f'{lair_action}')
+                #logger.info(f'{lair_action}')
+
+
